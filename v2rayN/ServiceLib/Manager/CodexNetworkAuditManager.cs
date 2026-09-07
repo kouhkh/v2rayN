@@ -15,6 +15,13 @@ public sealed class CodexNetworkAuditManager
     private string _observedIdentityConfidence = string.Empty;
     private long _contextStableSinceUnixMs;
     private bool _networkChangeSubscribed;
+    private readonly SemaphoreSlim _probeGate = new(1, 1);
+
+    public async Task<IDisposable> AcquireManualProbeLeaseAsync(CancellationToken cancellationToken)
+    {
+        await _probeGate.WaitAsync(cancellationToken);
+        return new ProbeLease(_probeGate);
+    }
 
     public void Start(Config config)
     {
@@ -175,6 +182,10 @@ public sealed class CodexNetworkAuditManager
             {
                 continue;
             }
+            if (!await _probeGate.WaitAsync(0, cancellationToken))
+            {
+                continue;
+            }
             try
             {
                 var profileIndexId = config.IndexId;
@@ -218,6 +229,20 @@ public sealed class CodexNetworkAuditManager
             {
                 Logging.SaveLog("CodexNetworkAudit", ex);
             }
+            finally
+            {
+                _probeGate.Release();
+            }
+        }
+    }
+
+    private sealed class ProbeLease(SemaphoreSlim gate) : IDisposable
+    {
+        private SemaphoreSlim? _gate = gate;
+
+        public void Dispose()
+        {
+            Interlocked.Exchange(ref _gate, null)?.Release();
         }
     }
 

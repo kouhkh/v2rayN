@@ -72,6 +72,7 @@ public partial class ProfilesViewModel : MyReactiveObject
     public ReactiveCommand<RxVoid, RxVoid> TcpingServerCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> RealPingServerCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> CodexConnectivityServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> FullCodexConnectivityServerCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> UdpTestServerCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> SpeedServerCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> SortServerResultCmd { get; }
@@ -192,6 +193,10 @@ public partial class ProfilesViewModel : MyReactiveObject
         {
             await ServerSpeedtest(ESpeedActionType.CodexConnectivity);
         }, canEditRemove);
+        FullCodexConnectivityServerCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await ServerSpeedtest(ESpeedActionType.CodexConnectivityFull);
+        });
         UdpTestServerCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await ServerSpeedtest(ESpeedActionType.UdpTest);
@@ -715,7 +720,9 @@ public partial class ProfilesViewModel : MyReactiveObject
     public async Task ServerSpeedtest(ESpeedActionType actionType)
     {
         List<ProfileItem>? lstSelected;
-        if (actionType is ESpeedActionType.Mixedtest or ESpeedActionType.FastRealping)
+        if (actionType is ESpeedActionType.Mixedtest
+            or ESpeedActionType.FastRealping
+            or ESpeedActionType.CodexConnectivityFull)
         {
             if (actionType == ESpeedActionType.FastRealping)
             {

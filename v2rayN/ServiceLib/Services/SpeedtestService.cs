@@ -12,10 +12,16 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
     private readonly int _speedTestPageSize = config.SpeedTestItem.SpeedTestPageSize ?? Global.SpeedTestPageSize;
     private readonly TimeSpan _delayInterval = TimeSpan.FromSeconds(config.SpeedTestItem.SpeedTestDelayInterval ?? 1);
 
+    private static bool IsCodexConnectivityAction(ESpeedActionType actionType)
+    {
+        return actionType is ESpeedActionType.CodexConnectivity or ESpeedActionType.CodexConnectivityFull;
+    }
+
     public void RunLoop(ESpeedActionType actionType, List<ProfileItem> selecteds)
     {
+        var isCodexConnectivity = IsCodexConnectivityAction(actionType);
         CancellationTokenSource? codexProbeCancellation = null;
-        if (actionType == ESpeedActionType.CodexConnectivity)
+        if (isCodexConnectivity)
         {
             _codexProbeCancellation?.Cancel();
             _codexProbeCancellation?.Dispose();
@@ -24,19 +30,26 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
         }
         Task.Run(async () =>
         {
+            IDisposable? auditProbeLease = null;
             try
             {
+                if (isCodexConnectivity)
+                {
+                    auditProbeLease = await CodexNetworkAuditManager.Instance.AcquireManualProbeLeaseAsync(
+                        codexProbeCancellation?.Token ?? CancellationToken.None);
+                }
                 await RunAsync(actionType, selecteds, codexProbeCancellation?.Token ?? CancellationToken.None);
                 await ProfileExManager.Instance.SaveTo();
                 await UpdateFunc("", ResUI.SpeedtestingCompleted);
             }
-            catch (OperationCanceledException) when (actionType == ESpeedActionType.CodexConnectivity)
+            catch (OperationCanceledException) when (isCodexConnectivity)
             {
                 await UpdateFunc("", ResUI.SpeedtestingStop);
             }
             finally
             {
-                if (actionType == ESpeedActionType.CodexConnectivity)
+                auditProbeLease?.Dispose();
+                if (isCodexConnectivity)
                 {
                     codexProbeCancellation?.Dispose();
                     if (ReferenceEquals(_codexProbeCancellation, codexProbeCancellation))
@@ -98,6 +111,13 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
 
             case ESpeedActionType.CodexConnectivity:
                 await RunCodexConnectivityBatchAsync(
+                    lstSelected,
+                    exitLoopKey,
+                    codexProbeCancellation);
+                break;
+
+            case ESpeedActionType.CodexConnectivityFull:
+                await RunFullCodexConnectivityAsync(
                     lstSelected,
                     exitLoopKey,
                     codexProbeCancellation);
@@ -164,13 +184,17 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
                     break;
 
                 case ESpeedActionType.CodexConnectivity:
+                case ESpeedActionType.CodexConnectivityFull:
                     await UpdateFunc(it.IndexId, ResUI.Speedtesting, ResUI.SpeedtestingWait);
                     ProfileExManager.Instance.SetTestDelay(it.IndexId, 0);
                     break;
             }
         }
 
-        if (lstSelected.Count > 1 && (actionType == ESpeedActionType.Speedtest || actionType == ESpeedActionType.Mixedtest))
+        if (lstSelected.Count > 1
+            && (actionType == ESpeedActionType.Speedtest
+                || actionType == ESpeedActionType.Mixedtest
+                || actionType == ESpeedActionType.CodexConnectivityFull))
         {
             NoticeManager.Instance.Enqueue(ResUI.SpeedtestingPressEscToExit);
         }
@@ -183,13 +207,84 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
         string exitLoopKey,
         CancellationToken cancellationToken)
     {
-        var pageSize = Math.Min(selecteds.Count, _speedTestPageSize);
-        using var concurrency = new SemaphoreSlim(Math.Clamp(_config.SpeedTestItem.MixedConcurrencyCount, 1, 5));
+        await RunCodexConnectivityBatchAsync(
+            selecteds,
+            exitLoopKey,
+            cancellationToken,
+            _config.SpeedTestItem.CodexProbeSamples,
+            Math.Clamp(_config.SpeedTestItem.MixedConcurrencyCount, 1, 5),
+            _speedTestPageSize,
+            "manual-selected",
+            TimeSpan.Zero);
+    }
+
+    private async Task RunFullCodexConnectivityAsync(
+        List<ServerTestItem> selecteds,
+        string exitLoopKey,
+        CancellationToken cancellationToken)
+    {
+        var screening = await RunCodexConnectivityBatchAsync(
+            selecteds,
+            exitLoopKey,
+            cancellationToken,
+            CodexFullProbePlanner.ScreeningSamples,
+            CodexFullProbePlanner.ScreeningConcurrency,
+            CodexFullProbePlanner.ScreeningPageSize,
+            "manual-full-screen",
+            TimeSpan.FromMilliseconds(CodexFullProbePlanner.ScreeningCooldownMilliseconds));
+        cancellationToken.ThrowIfCancellationRequested();
+        if (ShouldStopTest(exitLoopKey))
+        {
+            return;
+        }
+
+        var finalists = CodexFullProbePlanner.SelectFinalistIds(screening.Select(x => new CodexFullProbeCandidate(
+                x.Item.IndexId ?? string.Empty,
+                x.Result.SampleCount,
+                x.Result.SuccessCount,
+                x.Result.P90Ms,
+                x.Item.IndexId == _config.IndexId)).ToList())
+            .Select(id => screening.First(x => x.Item.IndexId == id).Item)
+            .ToList();
+        if (finalists.Count == 0)
+        {
+            return;
+        }
+
+        await RunCodexConnectivityBatchAsync(
+            finalists,
+            exitLoopKey,
+            cancellationToken,
+            CodexFullProbePlanner.ConfirmationSamples,
+            CodexFullProbePlanner.ConfirmationConcurrency,
+            CodexFullProbePlanner.ScreeningPageSize,
+            "manual-full-confirm",
+            TimeSpan.Zero);
+    }
+
+    private async Task<List<CodexProbeOutcome>> RunCodexConnectivityBatchAsync(
+        List<ServerTestItem> selecteds,
+        string exitLoopKey,
+        CancellationToken cancellationToken,
+        int sampleCount,
+        int concurrencyCount,
+        int pageSizeLimit,
+        string probeMode,
+        TimeSpan cooldown)
+    {
+        if (selecteds.Count == 0)
+        {
+            return [];
+        }
+
+        var outcomes = new ConcurrentBag<CodexProbeOutcome>();
+        var pageSize = Math.Min(selecteds.Count, Math.Max(1, pageSizeLimit));
+        using var concurrency = new SemaphoreSlim(Math.Clamp(concurrencyCount, 1, 5));
         foreach (var batch in GetTestBatchItem(selecteds, pageSize))
         {
             if (ShouldStopTest(exitLoopKey))
             {
-                return;
+                return outcomes.OrderBy(x => x.Item.QueueNum).ToList();
             }
 
             ProcessService? processService = null;
@@ -200,7 +295,7 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
                 {
                     continue;
                 }
-                await Task.Delay(1000);
+                await Task.Delay(1000, cancellationToken);
                 await Task.WhenAll(batch.Where(x => x.AllowTest).Select(async item =>
                 {
                     await concurrency.WaitAsync(cancellationToken);
@@ -213,8 +308,9 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
                         var proxy = new WebProxy($"socks5://{Global.Loopback}:{item.Port}");
                         var result = await new CodexConnectivityProbe().MeasureAsync(
                             proxy,
-                            _config.SpeedTestItem.CodexProbeSamples,
+                            sampleCount,
                             cancellationToken);
+                        outcomes.Add(new(item, result));
                         ProfileExManager.Instance.SetTestDelay(item.IndexId, result.MedianMs);
                         var detail = $"HTTP {result.SuccessCount}/{result.SampleCount} · TTFB p90 {result.P90Ms} ms";
                         if (result.HttpStatusSummary.IsNotEmpty())
@@ -226,7 +322,11 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
                             detail += $" · {result.ErrorKind}";
                         }
                         await UpdateFunc(item.IndexId, result.MedianMs.ToString(), detail);
-                        await CodexNetworkAuditManager.Instance.SaveAsync(item.Profile, item.IndexId, "manual-selected", result);
+                        await CodexNetworkAuditManager.Instance.SaveAsync(item.Profile, item.IndexId, probeMode, result);
+                        if (cooldown > TimeSpan.Zero)
+                        {
+                            await Task.Delay(cooldown, cancellationToken);
+                        }
                     }
                     finally
                     {
@@ -236,7 +336,7 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                return;
+                throw;
             }
             catch (Exception ex)
             {
@@ -249,9 +349,12 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
                     await processService.StopAsync();
                 }
             }
-            await Task.Delay(_delayInterval);
+            await Task.Delay(_delayInterval, cancellationToken);
         }
+        return outcomes.OrderBy(x => x.Item.QueueNum).ToList();
     }
+
+    private sealed record CodexProbeOutcome(ServerTestItem Item, CodexConnectivityResult Result);
 
     private async Task RunTcpingAsync(List<ServerTestItem> selecteds, string exitLoopKey)
     {

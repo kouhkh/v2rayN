@@ -1445,6 +1445,15 @@ namespace ServiceLib.Resx {
                 return ResourceManager.GetString("menuCodexConnectivityServer", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to One-click full Codex connectivity test (low impact).
+        /// </summary>
+        public static string menuFullCodexConnectivityServer {
+            get {
+                return ResourceManager.GetString("menuFullCodexConnectivityServer", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   查找类似 Test real delay 的本地化字符串。

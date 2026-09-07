@@ -498,6 +498,9 @@
   <data name="menuCodexConnectivityServer" xml:space="preserve">
     <value>Test Codex connectivity (multi-select)</value>
   </data>
+  <data name="menuFullCodexConnectivityServer" xml:space="preserve">
+    <value>One-click full Codex connectivity test (low impact)</value>
+  </data>
   <data name="TbSettingsCodexAuditEnabled" xml:space="preserve"><value>Enable Codex connectivity audit</value></data>
   <data name="TbSettingsCodexAuditInterval" xml:space="preserve"><value>Codex audit interval (minutes)</value></data>
   <data name="TbSettingsCodexAuditRetention" xml:space="preserve"><value>Codex audit retention (days)</value></data>

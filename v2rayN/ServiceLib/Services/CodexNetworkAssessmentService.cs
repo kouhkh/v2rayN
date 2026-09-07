@@ -45,7 +45,7 @@ public static class CodexNetworkAssessmentService
         var currentHealthy = currentSuccessRate == 1 && current.P90Ms is >= 0 and < 1_000;
 
         var candidate = records
-            .Where(x => x.ProbeMode == "manual-selected"
+            .Where(x => (x.ProbeMode == "manual-selected" || x.ProbeMode == "manual-full-confirm")
                 && x.ProfileIndexId != activeProfileIndexId
                 && x.NetworkFingerprint == current.NetworkFingerprint
                 && x.IdentityConfidence == current.IdentityConfidence

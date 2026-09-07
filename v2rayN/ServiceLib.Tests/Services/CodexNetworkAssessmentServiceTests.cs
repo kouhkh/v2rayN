@@ -17,6 +17,18 @@ public class CodexNetworkAssessmentServiceTests
     }
 
     [Test]
+    public async Task Assess_AcceptsConfirmedCandidateFromFullProbe()
+    {
+        var current = Probe("current", 2_100, "network-a", Now - 1_000);
+        var candidate = Probe("candidate", 700, "network-a", Now - 2_000, "manual-full-confirm");
+
+        var result = CodexNetworkAssessmentService.Assess([current, candidate], "current", "network-a", 0, Now);
+
+        await result.Kind.Should().BeEqualTo(CodexNetworkAssessmentKind.SwitchCandidate);
+        await result.CandidateProfileIndexId.Should().BeEqualTo("candidate");
+    }
+
+    [Test]
     public async Task Assess_DoesNotRecommendAnotherNodeWithoutClearAdvantage()
     {
         var current = Probe("current", 1_800, "network-a", Now - 1_000);

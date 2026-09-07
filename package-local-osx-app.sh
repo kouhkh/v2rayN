@@ -20,6 +20,21 @@ if [[ -e "$staging_dir" || -e "$app_path" ]]; then
   exit 2
 fi
 
+for required_file in v2rayN AmazTool v2rayN.icns v2rayN.png; do
+  if [[ ! -f "$gui_output/$required_file" ]]; then
+    echo "missing required single-file publish output: $gui_output/$required_file" >&2
+    exit 2
+  fi
+done
+
+# The macOS release uses separate single-file publishes for v2rayN and AmazTool.
+# Publishing both projects as loose files into one directory lets AmazTool's
+# trimming pass overwrite framework assemblies needed by the desktop app.
+if find "$gui_output" -maxdepth 1 -type f \( -name '*.dll' -o -name '*.deps.json' -o -name '*.runtimeconfig.json' \) | grep -q .; then
+  echo "GUI output contains loose managed assemblies; publish v2rayN and AmazTool separately with PublishSingleFile=true" >&2
+  exit 2
+fi
+
 mkdir -p "$staging_dir" "$app_path/Contents/MacOS" "$app_path/Contents/Resources"
 unzip -q "$core_zip" -d "$staging_dir"
 cp -R "$gui_output"/. "$app_path/Contents/MacOS"/

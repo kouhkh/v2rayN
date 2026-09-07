@@ -498,6 +498,9 @@
   <data name="menuCodexConnectivityServer" xml:space="preserve">
     <value>测试 Codex 连接 (多选)</value>
   </data>
+  <data name="menuFullCodexConnectivityServer" xml:space="preserve">
+    <value>一键全量测试 Codex 连接（低干扰）</value>
+  </data>
   <data name="TbSettingsCodexAuditEnabled" xml:space="preserve"><value>启用 Codex 连接审计</value></data>
   <data name="TbSettingsCodexAuditInterval" xml:space="preserve"><value>Codex 审计间隔（分钟）</value></data>
   <data name="TbSettingsCodexAuditRetention" xml:space="preserve"><value>Codex 审计保留（天）</value></data>

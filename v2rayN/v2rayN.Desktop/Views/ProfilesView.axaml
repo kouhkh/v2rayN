@@ -88,6 +88,18 @@
                         </Button.Content>
                     </Button>
                     <Button
+                        x:Name="btnFullCodexConnectivity"
+                        Margin="{StaticResource MarginLr4}"
+                        Classes="IconButton Success"
+                        ToolTip.Tip="{x:Static resx:ResUI.menuFullCodexConnectivityServer}">
+                        <Button.Content>
+                            <TextBlock
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Text="C" />
+                        </Button.Content>
+                    </Button>
+                    <Button
                         x:Name="menuMixedTestServer"
                         Margin="{StaticResource MarginLr4}"
                         Classes="IconButton Success"
