@@ -11,6 +11,9 @@ core_zip="$2"
 staging_dir="$3"
 app_path="$4"
 version="$5"
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+branded_icon="$script_dir/branding/v2rayN-codex.icns"
+branded_png="$script_dir/branding/v2rayN-codex-1024.png"
 
 if [[ -e "$staging_dir" || -e "$app_path" ]]; then
   echo "staging directory and app path must not already exist" >&2
@@ -21,6 +24,12 @@ mkdir -p "$staging_dir" "$app_path/Contents/MacOS" "$app_path/Contents/Resources
 unzip -q "$core_zip" -d "$staging_dir"
 cp -R "$gui_output"/. "$app_path/Contents/MacOS"/
 cp -R "$staging_dir/v2rayN-macos-arm64"/. "$app_path/Contents/MacOS"/
+if [[ -f "$branded_icon" ]]; then
+  cp "$branded_icon" "$app_path/Contents/MacOS/v2rayN.icns"
+fi
+if [[ -f "$branded_png" ]]; then
+  cp "$branded_png" "$app_path/Contents/MacOS/v2rayN.png"
+fi
 cp "$app_path/Contents/MacOS/v2rayN.icns" "$app_path/Contents/Resources/AppIcon.icns"
 printf '%s\n' 'When this file exists, app will not store configs under this folder' > "$app_path/Contents/MacOS/NotStoreConfigHere.txt"
 chmod +x "$app_path/Contents/MacOS/v2rayN" "$app_path/Contents/MacOS/AmazTool"
