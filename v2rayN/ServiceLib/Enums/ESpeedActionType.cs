@@ -7,5 +7,7 @@ public enum ESpeedActionType
     UdpTest,
     Speedtest,
     Mixedtest,
-    FastRealping
+    FastRealping,
+    CodexConnectivity,
+    CodexConnectivityFull
 }

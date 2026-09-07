@@ -495,6 +495,16 @@
   <data name="menuRealPingServer" xml:space="preserve">
     <value>Test real delay</value>
   </data>
+  <data name="menuCodexConnectivityServer" xml:space="preserve">
+    <value>Test Codex connectivity (multi-select)</value>
+  </data>
+  <data name="menuFullCodexConnectivityServer" xml:space="preserve">
+    <value>One-click full Codex connectivity test (low impact)</value>
+  </data>
+  <data name="TbSettingsCodexAuditEnabled" xml:space="preserve"><value>Enable Codex connectivity audit</value></data>
+  <data name="TbSettingsCodexAuditInterval" xml:space="preserve"><value>Codex audit interval (minutes)</value></data>
+  <data name="TbSettingsCodexAuditRetention" xml:space="preserve"><value>Codex audit retention (days)</value></data>
+  <data name="TbSettingsCodexProbeSamples" xml:space="preserve"><value>Samples per Codex probe</value></data>
   <data name="menuSortServerResult" xml:space="preserve">
     <value>Sort by test result</value>
   </data>
@@ -1887,4 +1897,28 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="TbSettingsMux4Ray" xml:space="preserve">
     <value>Xray Mux setting</value>
   </data>
+  <data name="menuCodexNetworkHistory" xml:space="preserve"><value>Codex connectivity history</value></data>
+  <data name="TbCodexAuditSummary" xml:space="preserve"><value>{0} records; {1} fully successful</value></data>
+  <data name="LvCodexAuditTime" xml:space="preserve"><value>Time</value></data>
+  <data name="LvCodexAuditNode" xml:space="preserve"><value>Node</value></data>
+  <data name="LvCodexAuditNetwork" xml:space="preserve"><value>Network</value></data>
+  <data name="LvCodexAuditNetworkKind" xml:space="preserve"><value>Network kind</value></data>
+  <data name="LvCodexAuditMode" xml:space="preserve"><value>Probe mode</value></data>
+  <data name="LvCodexAuditSuccess" xml:space="preserve"><value>Success</value></data>
+  <data name="LvCodexAuditMedian" xml:space="preserve"><value>Median ms</value></data>
+  <data name="LvCodexAuditP90" xml:space="preserve"><value>P90 ms</value></data>
+  <data name="LvCodexAuditError" xml:space="preserve"><value>Error</value></data>
+  <data name="LvCodexAuditSignals" xml:space="preserve"><value>Codex client signals</value></data>
+  <data name="TbCodexAuditSignalsFormat" xml:space="preserve"><value>retry {0} | timeout {1} | disconnect {2} | send {3} | HTTP fallback {4}</value></data>
+  <data name="TbCodexAuditSignalsUnattributed" xml:space="preserve"><value>machine-wide, unattributed: {0}</value></data>
+  <data name="TbCodexAssessmentNoData" xml:space="preserve"><value>Assessment: no recent sample for the active node. Run “Test Codex connectivity” first.</value></data>
+  <data name="TbCodexAssessmentContextChanged" xml:space="preserve"><value>Assessment: the node or access-network context changed after the previous sample. Retest in the current context before deciding.</value></data>
+  <data name="TbCodexAssessmentStale" xml:space="preserve"><value>Assessment: the active-node sample is over one hour old. Retest before switching.</value></data>
+  <data name="TbCodexAssessmentSwitch" xml:space="preserve"><value>Assessment: {0} is worth an immediate retest (P90 {1} ms vs current {2} ms). Switch only after the retest confirms the gap, then observe two audit windows.</value></data>
+  <data name="TbCodexAssessmentAccessNetwork" xml:space="preserve"><value>Assessment: current P90 is {0} ms and no clearly better node was measured. Retest or compare another access network before switching nodes.</value></data>
+  <data name="TbCodexAssessmentLongStream" xml:space="preserve"><value>Assessment: short-request P90 is {0} ms, but Codex logged retries/timeouts/disconnects. Suspect long-stream stability; a node switch is worth an A/B retest.</value></data>
+  <data name="TbCodexAssessmentSignalsUnavailable" xml:space="preserve"><value>Assessment: short-request P90 is {0} ms, but Codex client signals are not available yet. Wait for a new scheduled window before deciding.</value></data>
+  <data name="TbCodexAssessmentNoClientActivity" xml:space="preserve"><value>Assessment: short-request P90 is {0} ms, but no Codex activity occurred in the correlated window. Network reachability looks good; client stability is still unproven.</value></data>
+  <data name="TbCodexAssessmentHealthy" xml:space="preserve"><value>Assessment: short requests are reachable (P90 {0} ms) and no recognized client error appeared in a stable-context window. This does not measure the current task's first output or prove model/service health.</value></data>
+  <data name="TbCodexAssessmentTail" xml:space="preserve"><value>Assessment: current P90 is {0} ms with noticeable tail latency, but no alternative is clearly better yet. Keep observing before switching.</value></data>
 </root>

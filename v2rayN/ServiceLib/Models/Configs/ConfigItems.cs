@@ -164,6 +164,11 @@ public class SpeedTestItem
     public string UdpTestTarget { get; set; }
     public int? SpeedTestPageSize { get; set; }
     public int? SpeedTestDelayInterval { get; set; }
+    public bool CodexAuditEnabled { get; set; }
+    public int CodexAuditIntervalMinutes { get; set; } = 15;
+    public int CodexAuditRetentionDays { get; set; } = 30;
+    public int CodexProbeSamples { get; set; } = 5;
+    public string? CodexAuditSalt { get; set; }
 }
 
 [Serializable]

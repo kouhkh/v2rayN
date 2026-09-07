@@ -144,6 +144,18 @@ public static class ConfigHandler
         {
             config.SpeedTestItem.UdpTestTarget = Global.UdpTestTargets.First();
         }
+        if (config.SpeedTestItem.CodexAuditIntervalMinutes < 5)
+        {
+            config.SpeedTestItem.CodexAuditIntervalMinutes = 15;
+        }
+        if (config.SpeedTestItem.CodexAuditRetentionDays < 1)
+        {
+            config.SpeedTestItem.CodexAuditRetentionDays = 30;
+        }
+        if (config.SpeedTestItem.CodexProbeSamples is < 1 or > 10)
+        {
+            config.SpeedTestItem.CodexProbeSamples = 5;
+        }
 
         config.Mux4RayItem ??= new()
         {
@@ -413,7 +425,12 @@ public static class ConfigHandler
             return -1;
         }
 
+        var previousIndexId = config.IndexId;
         config.IndexId = indexId;
+        if (previousIndexId != indexId)
+        {
+            CodexNetworkAuditManager.Instance.NotifyContextChanged();
+        }
 
         await SaveConfig(config);
 
