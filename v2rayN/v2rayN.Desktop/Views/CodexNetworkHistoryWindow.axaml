@@ -1,0 +1,49 @@
+<Window
+    x:Class="v2rayN.Desktop.Views.CodexNetworkHistoryWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
+    xmlns:vms="clr-namespace:ServiceLib.ViewModels;assembly=ServiceLib"
+    Title="{x:Static resx:ResUI.menuCodexNetworkHistory}"
+    Width="1100"
+    Height="650"
+    x:DataType="vms:CodexNetworkHistoryViewModel"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterScreen">
+    <DockPanel Margin="{StaticResource Margin8}">
+        <StackPanel
+            Margin="{StaticResource Margin4}"
+            DockPanel.Dock="Top"
+            Orientation="Horizontal">
+            <Button
+                x:Name="btnRefresh"
+                Width="100"
+                Content="{x:Static resx:ResUI.menuReload}" />
+            <TextBlock
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Text="{Binding Summary}" />
+        </StackPanel>
+        <DataGrid
+            AutoGenerateColumns="False"
+            BorderThickness="1"
+            CanUserResizeColumns="True"
+            GridLinesVisibility="All"
+            HeadersVisibility="Column"
+            IsReadOnly="True"
+            ItemsSource="{Binding Items}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="155" Binding="{Binding Time}" Header="{x:Static resx:ResUI.LvCodexAuditTime}" />
+                <DataGridTextColumn Width="85" Binding="{Binding Node}" Header="{x:Static resx:ResUI.LvCodexAuditNode}" />
+                <DataGridTextColumn Width="85" Binding="{Binding Network}" Header="{x:Static resx:ResUI.LvCodexAuditNetwork}" />
+                <DataGridTextColumn Width="110" Binding="{Binding NetworkKind}" Header="{x:Static resx:ResUI.LvCodexAuditNetworkKind}" />
+                <DataGridTextColumn Width="150" Binding="{Binding Mode}" Header="{x:Static resx:ResUI.LvCodexAuditMode}" />
+                <DataGridTextColumn Width="75" Binding="{Binding Success}" Header="{x:Static resx:ResUI.LvCodexAuditSuccess}" />
+                <DataGridTextColumn Width="85" Binding="{Binding MedianMs}" Header="{x:Static resx:ResUI.LvCodexAuditMedian}" />
+                <DataGridTextColumn Width="85" Binding="{Binding P90Ms}" Header="{x:Static resx:ResUI.LvCodexAuditP90}" />
+                <DataGridTextColumn Width="100" Binding="{Binding HttpStatus}" Header="HTTP" />
+                <DataGridTextColumn Width="*" Binding="{Binding Error}" Header="{x:Static resx:ResUI.LvCodexAuditError}" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

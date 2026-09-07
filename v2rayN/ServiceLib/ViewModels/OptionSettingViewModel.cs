@@ -58,6 +58,10 @@ public partial class OptionSettingViewModel : MyReactiveObject, ICloseable
     [Reactive] public partial string SpeedPingTestUrl { get; set; }
     [Reactive] public partial string UdpTestTarget { get; set; }
     [Reactive] public partial int MixedConcurrencyCount { get; set; }
+    [Reactive] public partial bool CodexAuditEnabled { get; set; }
+    [Reactive] public partial int CodexAuditIntervalMinutes { get; set; }
+    [Reactive] public partial int CodexAuditRetentionDays { get; set; }
+    [Reactive] public partial int CodexProbeSamples { get; set; }
     [Reactive] public partial bool EnableHWA { get; set; }
     [Reactive] public partial string SubConvertUrl { get; set; }
     [Reactive] public partial int MainGirdOrientation { get; set; }
@@ -191,6 +195,10 @@ public partial class OptionSettingViewModel : MyReactiveObject, ICloseable
         MixedConcurrencyCount = _config.SpeedTestItem.MixedConcurrencyCount;
         SpeedPingTestUrl = _config.SpeedTestItem.SpeedPingTestUrl;
         UdpTestTarget = _config.SpeedTestItem.UdpTestTarget;
+        CodexAuditEnabled = _config.SpeedTestItem.CodexAuditEnabled;
+        CodexAuditIntervalMinutes = _config.SpeedTestItem.CodexAuditIntervalMinutes;
+        CodexAuditRetentionDays = _config.SpeedTestItem.CodexAuditRetentionDays;
+        CodexProbeSamples = _config.SpeedTestItem.CodexProbeSamples;
         EnableHWA = _config.GuiItem.EnableHWA;
         SubConvertUrl = _config.ConstItem.SubConvertUrl;
         MainGirdOrientation = (int)_config.UiItem.MainGirdOrientation;
@@ -366,6 +374,10 @@ public partial class OptionSettingViewModel : MyReactiveObject, ICloseable
         _config.SpeedTestItem.SpeedTestUrl = SpeedTestUrl;
         _config.SpeedTestItem.SpeedPingTestUrl = SpeedPingTestUrl;
         _config.SpeedTestItem.UdpTestTarget = UdpTestTarget;
+        _config.SpeedTestItem.CodexAuditEnabled = CodexAuditEnabled;
+        _config.SpeedTestItem.CodexAuditIntervalMinutes = Math.Clamp(CodexAuditIntervalMinutes, 5, 1440);
+        _config.SpeedTestItem.CodexAuditRetentionDays = Math.Clamp(CodexAuditRetentionDays, 1, 365);
+        _config.SpeedTestItem.CodexProbeSamples = Math.Clamp(CodexProbeSamples, 1, 10);
         _config.GuiItem.EnableHWA = EnableHWA;
         _config.ConstItem.SubConvertUrl = SubConvertUrl;
         _config.UiItem.MainGirdOrientation = (EGirdOrientation)MainGirdOrientation;

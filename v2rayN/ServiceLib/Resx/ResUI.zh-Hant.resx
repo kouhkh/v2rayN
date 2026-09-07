@@ -495,6 +495,13 @@
   <data name="menuRealPingServer" xml:space="preserve">
     <value>測試真連線延遲 (多選)</value>
   </data>
+  <data name="menuCodexConnectivityServer" xml:space="preserve">
+    <value>測試 Codex 連線 (多選)</value>
+  </data>
+  <data name="TbSettingsCodexAuditEnabled" xml:space="preserve"><value>啟用 Codex 連線稽核</value></data>
+  <data name="TbSettingsCodexAuditInterval" xml:space="preserve"><value>Codex 稽核間隔（分鐘）</value></data>
+  <data name="TbSettingsCodexAuditRetention" xml:space="preserve"><value>Codex 稽核保留（天）</value></data>
+  <data name="TbSettingsCodexProbeSamples" xml:space="preserve"><value>每次 Codex 探測樣本數</value></data>
   <data name="menuSortServerResult" xml:space="preserve">
     <value>按測試結果排序</value>
   </data>
@@ -1864,4 +1871,15 @@
   <data name="LvCustomCoreType" xml:space="preserve">
     <value>自訂設定核心</value>
   </data>
+  <data name="menuCodexNetworkHistory" xml:space="preserve"><value>Codex 連線歷史</value></data>
+  <data name="TbCodexAuditSummary" xml:space="preserve"><value>共 {0} 筆；完全成功 {1} 筆</value></data>
+  <data name="LvCodexAuditTime" xml:space="preserve"><value>時間</value></data>
+  <data name="LvCodexAuditNode" xml:space="preserve"><value>節點</value></data>
+  <data name="LvCodexAuditNetwork" xml:space="preserve"><value>網路</value></data>
+  <data name="LvCodexAuditNetworkKind" xml:space="preserve"><value>網路類型</value></data>
+  <data name="LvCodexAuditMode" xml:space="preserve"><value>探測方式</value></data>
+  <data name="LvCodexAuditSuccess" xml:space="preserve"><value>成功</value></data>
+  <data name="LvCodexAuditMedian" xml:space="preserve"><value>中位數 ms</value></data>
+  <data name="LvCodexAuditP90" xml:space="preserve"><value>P90 ms</value></data>
+  <data name="LvCodexAuditError" xml:space="preserve"><value>錯誤</value></data>
 </root>

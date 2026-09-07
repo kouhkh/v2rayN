@@ -55,6 +55,7 @@ public partial class MainWindowViewModel : MyReactiveObject
     public ReactiveCommand<RxVoid, RxVoid> DNSSettingCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> FullConfigTemplateCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> GlobalHotkeySettingCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> CodexNetworkHistoryCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> RebootAsAdminCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> ClearServerStatisticsCmd { get; }
     public ReactiveCommand<RxVoid, RxVoid> OpenTheFileLocationCmd { get; }
@@ -217,6 +218,10 @@ public partial class MainWindowViewModel : MyReactiveObject
                 NoticeManager.Instance.Enqueue(ResUI.OperationSuccess);
             }
         });
+        CodexNetworkHistoryCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await AppManager.Instance.WindowDialog.ShowDialogAsync(new CodexNetworkHistoryViewModel());
+        });
         RebootAsAdminCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await AppManager.Instance.RebootAsAdmin();
@@ -332,6 +337,7 @@ public partial class MainWindowViewModel : MyReactiveObject
         await CoreManager.Instance.Init(_config, UpdateHandler);
         await CertPemManager.Instance.Init(_config);
         TaskManager.Instance.RegUpdateTask(_config, UpdateTaskHandler);
+        CodexNetworkAuditManager.Instance.Start(_config);
 
         if (_config.GuiItem.EnableStatistics || _config.GuiItem.DisplayRealTimeSpeed)
         {

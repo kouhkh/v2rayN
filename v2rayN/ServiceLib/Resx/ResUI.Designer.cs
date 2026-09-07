@@ -1436,6 +1436,15 @@ namespace ServiceLib.Resx {
                 return ResourceManager.GetString("menuProxiesSelectActivity", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Test Codex connectivity (multi-select).
+        /// </summary>
+        public static string menuCodexConnectivityServer {
+            get {
+                return ResourceManager.GetString("menuCodexConnectivityServer", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   查找类似 Test real delay 的本地化字符串。
@@ -5355,6 +5364,34 @@ namespace ServiceLib.Resx {
             }
         }
         
+        public static string TbSettingsCodexAuditEnabled {
+            get { return ResourceManager.GetString("TbSettingsCodexAuditEnabled", resourceCulture); }
+        }
+
+        public static string TbSettingsCodexAuditInterval {
+            get { return ResourceManager.GetString("TbSettingsCodexAuditInterval", resourceCulture); }
+        }
+
+        public static string TbSettingsCodexAuditRetention {
+            get { return ResourceManager.GetString("TbSettingsCodexAuditRetention", resourceCulture); }
+        }
+
+        public static string TbSettingsCodexProbeSamples {
+            get { return ResourceManager.GetString("TbSettingsCodexProbeSamples", resourceCulture); }
+        }
+
+        public static string menuCodexNetworkHistory { get { return ResourceManager.GetString("menuCodexNetworkHistory", resourceCulture); } }
+        public static string TbCodexAuditSummary { get { return ResourceManager.GetString("TbCodexAuditSummary", resourceCulture); } }
+        public static string LvCodexAuditTime { get { return ResourceManager.GetString("LvCodexAuditTime", resourceCulture); } }
+        public static string LvCodexAuditNode { get { return ResourceManager.GetString("LvCodexAuditNode", resourceCulture); } }
+        public static string LvCodexAuditNetwork { get { return ResourceManager.GetString("LvCodexAuditNetwork", resourceCulture); } }
+        public static string LvCodexAuditNetworkKind { get { return ResourceManager.GetString("LvCodexAuditNetworkKind", resourceCulture); } }
+        public static string LvCodexAuditMode { get { return ResourceManager.GetString("LvCodexAuditMode", resourceCulture); } }
+        public static string LvCodexAuditSuccess { get { return ResourceManager.GetString("LvCodexAuditSuccess", resourceCulture); } }
+        public static string LvCodexAuditMedian { get { return ResourceManager.GetString("LvCodexAuditMedian", resourceCulture); } }
+        public static string LvCodexAuditP90 { get { return ResourceManager.GetString("LvCodexAuditP90", resourceCulture); } }
+        public static string LvCodexAuditError { get { return ResourceManager.GetString("LvCodexAuditError", resourceCulture); } }
+
         /// <summary>
         ///   查找类似 Upgrade App does not exist 的本地化字符串。
         /// </summary>

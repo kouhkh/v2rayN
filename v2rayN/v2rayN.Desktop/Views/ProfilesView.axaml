@@ -141,6 +141,9 @@
                             Header="{x:Static resx:ResUI.menuRealPingServer}"
                             InputGesture="Ctrl+R" />
                         <MenuItem
+                            x:Name="menuCodexConnectivityServer"
+                            Header="{x:Static resx:ResUI.menuCodexConnectivityServer}" />
+                        <MenuItem
                             x:Name="menuSpeedServer"
                             Header="{x:Static resx:ResUI.menuSpeedServer}"
                             InputGesture="Ctrl+T" />

@@ -1,0 +1,207 @@
+namespace ServiceLib.Manager;
+
+public sealed class CodexNetworkAuditManager
+{
+    private const int MaxRows = 50_000;
+    private static readonly Lazy<CodexNetworkAuditManager> _instance = new(() => new());
+    public static CodexNetworkAuditManager Instance => _instance.Value;
+    private CancellationTokenSource? _cancellation;
+    private Task? _loopTask;
+    private Config? _config;
+
+    public void Start(Config config)
+    {
+        if (_loopTask is { IsCompleted: false })
+        {
+            return;
+        }
+        _config = config;
+        if (_config.SpeedTestItem.CodexAuditSalt.IsNullOrEmpty())
+        {
+            _config.SpeedTestItem.CodexAuditSalt = Utils.GetGuid(false);
+            _ = PersistSaltSafelyAsync(_config);
+        }
+        _cancellation = new CancellationTokenSource();
+        _ = PurgeSafelyAsync(_config.SpeedTestItem.CodexAuditRetentionDays);
+        _loopTask = RunLoopAsync(_cancellation.Token);
+    }
+
+    public async Task StopAsync()
+    {
+        if (_cancellation is null || _loopTask is null)
+        {
+            return;
+        }
+        await _cancellation.CancelAsync();
+        try
+        {
+            await _loopTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        _cancellation.Dispose();
+        _cancellation = null;
+        _loopTask = null;
+    }
+
+    public async Task SaveAsync(
+        ProfileItem? profile,
+        string profileIndexId,
+        string mode,
+        CodexConnectivityResult result,
+        bool nodeChangedDuringProbe = false)
+    {
+        var network = GetNetworkIdentity(_config?.SpeedTestItem.CodexAuditSalt ?? string.Empty);
+        var item = new CodexNetworkProbeItem
+        {
+            Id = Utils.GetGuid(false),
+            CreatedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            ProfileIndexId = profileIndexId ?? string.Empty,
+            NodeFingerprint = GetNodeFingerprint(profile, _config?.SpeedTestItem.CodexAuditSalt ?? string.Empty),
+            NetworkFingerprint = network.Fingerprint,
+            NetworkKind = network.Kind,
+            IdentityConfidence = network.Confidence,
+            ProbeMode = mode,
+            SampleCount = result.SampleCount,
+            SuccessCount = result.SuccessCount,
+            MedianMs = result.MedianMs,
+            P90Ms = result.P90Ms,
+            HttpStatusSummary = result.HttpStatusSummary,
+            ErrorKind = result.ErrorKind,
+            ProbeVersion = 1,
+            NetworkIdentityVersion = 1,
+            NodeChangedDuringProbe = nodeChangedDuringProbe,
+        };
+        await SQLiteHelper.Instance.InsertAsync(item);
+    }
+
+    public async Task<List<CodexNetworkProbeItem>> GetRecentAsync(int limit = 1_000)
+    {
+        limit = Math.Clamp(limit, 1, 5_000);
+        return await SQLiteHelper.Instance.TableAsync<CodexNetworkProbeItem>()
+            .OrderByDescending(x => x.CreatedAtUnixMs)
+            .Take(limit)
+            .ToListAsync();
+    }
+
+    public async Task PurgeAsync(int retentionDays)
+    {
+        retentionDays = Math.Clamp(retentionDays, 1, 365);
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-retentionDays).ToUnixTimeMilliseconds();
+        await SQLiteHelper.Instance.ExecuteAsync($"delete from CodexNetworkProbeItem where CreatedAtUnixMs < {cutoff}");
+        await SQLiteHelper.Instance.ExecuteAsync(
+            $"delete from CodexNetworkProbeItem where Id not in " +
+            $"(select Id from CodexNetworkProbeItem order by CreatedAtUnixMs desc limit {MaxRows})");
+    }
+
+    private async Task RunLoopAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
+        while (await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            var config = _config;
+            if (config is null || !config.SpeedTestItem.CodexAuditEnabled)
+            {
+                continue;
+            }
+            var interval = Math.Clamp(config.SpeedTestItem.CodexAuditIntervalMinutes, 5, 1440);
+            var nowMinutes = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 60;
+            if (nowMinutes % interval != 0)
+            {
+                continue;
+            }
+            try
+            {
+                var profileIndexId = config.IndexId;
+                var profile = await AppManager.Instance.GetProfileItem(profileIndexId);
+                var proxy = new WebProxy($"socks5://{Global.Loopback}:{AppManager.Instance.GetLocalPort(EInboundProtocol.socks)}");
+                var result = await new CodexConnectivityProbe().MeasureAsync(
+                    proxy,
+                    config.SpeedTestItem.CodexProbeSamples,
+                    cancellationToken);
+                var nodeChanged = config.IndexId != profileIndexId;
+                var mode = nodeChanged ? "scheduled-node-changed" : "scheduled-active";
+                await SaveAsync(profile, profileIndexId, mode, result, nodeChanged);
+                await PurgeAsync(config.SpeedTestItem.CodexAuditRetentionDays);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog("CodexNetworkAudit", ex);
+            }
+        }
+    }
+
+    private async Task PurgeSafelyAsync(int retentionDays)
+    {
+        try
+        {
+            await PurgeAsync(retentionDays);
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog("CodexNetworkAuditPurge", ex);
+        }
+    }
+
+    private static async Task PersistSaltSafelyAsync(Config config)
+    {
+        try
+        {
+            await ConfigHandler.SaveConfig(config);
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog("CodexNetworkAuditSalt", ex);
+        }
+    }
+
+    private static string GetNodeFingerprint(ProfileItem? profile, string salt)
+    {
+        if (profile is null)
+        {
+            return "unknown";
+        }
+        var raw = string.Join('|', profile.ConfigType, profile.Address, profile.Port, profile.Password,
+            profile.Network, profile.StreamSecurity, profile.Sni, profile.ProtoExtra, profile.TransportExtra);
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(salt));
+        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(raw))).ToLowerInvariant()[..16];
+    }
+
+    private static (string Kind, string Fingerprint, string Confidence) GetNetworkIdentity(string salt)
+    {
+        try
+        {
+            var candidates = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(x => x.OperationalStatus == OperationalStatus.Up
+                    && x.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                .Select(x => new
+                {
+                    Kind = x.NetworkInterfaceType.ToString(),
+                    Gateways = x.GetIPProperties().GatewayAddresses
+                        .Select(g => g.Address.ToString())
+                        .OrderBy(g => g, StringComparer.Ordinal)
+                        .ToArray(),
+                })
+                .Where(x => x.Gateways.Length > 0)
+                .OrderBy(x => x.Kind, StringComparer.Ordinal)
+                .ThenBy(x => string.Join(',', x.Gateways), StringComparer.Ordinal)
+                .ToList();
+            if (candidates.Count == 0)
+            {
+                return ("Unknown", "unknown", "none");
+            }
+            var raw = string.Join('|', candidates.Select(x => $"{x.Kind}:{string.Join(',', x.Gateways)}"));
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{salt}|{raw}"))).ToLowerInvariant()[..16];
+            return (string.Join(',', candidates.Select(x => x.Kind).Distinct()), hash, "gateway-set");
+        }
+        catch
+        {
+            return ("Unknown", "unknown", "none");
+        }
+    }
+}

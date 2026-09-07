@@ -495,6 +495,13 @@
   <data name="menuRealPingServer" xml:space="preserve">
     <value>Test real delay</value>
   </data>
+  <data name="menuCodexConnectivityServer" xml:space="preserve">
+    <value>Test Codex connectivity (multi-select)</value>
+  </data>
+  <data name="TbSettingsCodexAuditEnabled" xml:space="preserve"><value>Enable Codex connectivity audit</value></data>
+  <data name="TbSettingsCodexAuditInterval" xml:space="preserve"><value>Codex audit interval (minutes)</value></data>
+  <data name="TbSettingsCodexAuditRetention" xml:space="preserve"><value>Codex audit retention (days)</value></data>
+  <data name="TbSettingsCodexProbeSamples" xml:space="preserve"><value>Samples per Codex probe</value></data>
   <data name="menuSortServerResult" xml:space="preserve">
     <value>Sort by test result</value>
   </data>
@@ -1887,4 +1894,15 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="TbSettingsMux4Ray" xml:space="preserve">
     <value>Xray Mux setting</value>
   </data>
+  <data name="menuCodexNetworkHistory" xml:space="preserve"><value>Codex connectivity history</value></data>
+  <data name="TbCodexAuditSummary" xml:space="preserve"><value>{0} records; {1} fully successful</value></data>
+  <data name="LvCodexAuditTime" xml:space="preserve"><value>Time</value></data>
+  <data name="LvCodexAuditNode" xml:space="preserve"><value>Node</value></data>
+  <data name="LvCodexAuditNetwork" xml:space="preserve"><value>Network</value></data>
+  <data name="LvCodexAuditNetworkKind" xml:space="preserve"><value>Network kind</value></data>
+  <data name="LvCodexAuditMode" xml:space="preserve"><value>Probe mode</value></data>
+  <data name="LvCodexAuditSuccess" xml:space="preserve"><value>Success</value></data>
+  <data name="LvCodexAuditMedian" xml:space="preserve"><value>Median ms</value></data>
+  <data name="LvCodexAuditP90" xml:space="preserve"><value>P90 ms</value></data>
+  <data name="LvCodexAuditError" xml:space="preserve"><value>Error</value></data>
 </root>

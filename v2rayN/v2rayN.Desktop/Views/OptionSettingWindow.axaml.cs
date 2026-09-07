@@ -52,6 +52,9 @@ public partial class OptionSettingWindow : WindowBase<OptionSettingViewModel>
         cmbSpeedTestUrl.ItemsSource = Global.SpeedTestUrls;
         cmbSpeedPingTestUrl.ItemsSource = Global.SpeedPingTestUrls;
         cmbUdpTestTarget.ItemsSource = Global.UdpTestTargets;
+        cmbCodexAuditInterval.ItemsSource = new[] { 5, 15, 30, 60, 180, 360, 720, 1440 };
+        cmbCodexAuditRetention.ItemsSource = new[] { 7, 30, 90, 180, 365 };
+        cmbCodexProbeSamples.ItemsSource = new[] { 3, 5, 10 };
         cmbSubConvertUrl.ItemsSource = Global.SubConvertUrls;
         cmbGetFilesSourceUrl.ItemsSource = Global.GeoFilesSources;
         cmbSrsFilesSourceUrl.ItemsSource = Global.SingboxRulesetSources;
@@ -111,6 +114,10 @@ public partial class OptionSettingWindow : WindowBase<OptionSettingViewModel>
             this.Bind(ViewModel, vm => vm.SpeedTestUrl, v => v.cmbSpeedTestUrl.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SpeedPingTestUrl, v => v.cmbSpeedPingTestUrl.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.UdpTestTarget, v => v.cmbUdpTestTarget.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.CodexAuditEnabled, v => v.togCodexAuditEnabled.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.CodexAuditIntervalMinutes, v => v.cmbCodexAuditInterval.SelectedValue).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.CodexAuditRetentionDays, v => v.cmbCodexAuditRetention.SelectedValue).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.CodexProbeSamples, v => v.cmbCodexProbeSamples.SelectedValue).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.MixedConcurrencyCount, v => v.cmbMixedConcurrencyCount.SelectedValue).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SubConvertUrl, v => v.cmbSubConvertUrl.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.MainGirdOrientation, view => view.cmbMainGirdOrientation.SelectedIndex).DisposeWith(disposables);
