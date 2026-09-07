@@ -1882,4 +1882,17 @@
   <data name="LvCodexAuditMedian" xml:space="preserve"><value>中位數 ms</value></data>
   <data name="LvCodexAuditP90" xml:space="preserve"><value>P90 ms</value></data>
   <data name="LvCodexAuditError" xml:space="preserve"><value>錯誤</value></data>
+  <data name="LvCodexAuditSignals" xml:space="preserve"><value>Codex 客戶端訊號</value></data>
+  <data name="TbCodexAuditSignalsFormat" xml:space="preserve"><value>重試 {0}｜逾時 {1}｜斷流 {2}｜傳送失敗 {3}｜HTTP 回退 {4}</value></data>
+  <data name="TbCodexAuditSignalsUnattributed" xml:space="preserve"><value>整機未歸屬：{0}</value></data>
+  <data name="TbCodexAssessmentNoData" xml:space="preserve"><value>判斷：目前節點沒有近期樣本，請先執行「測試 Codex 連線」。</value></data>
+  <data name="TbCodexAssessmentContextChanged" xml:space="preserve"><value>判斷：上次採樣後節點或接入網路上下文已經變化，請先在目前上下文重測。</value></data>
+  <data name="TbCodexAssessmentStale" xml:space="preserve"><value>判斷：目前節點樣本已超過一小時，切換前請先重測。</value></data>
+  <data name="TbCodexAssessmentSwitch" xml:space="preserve"><value>判斷：{0} 值得立即重測（P90 {1} ms，目前 {2} ms）。只有重測仍有明顯差距時再手動切換，並觀察兩個稽核視窗。</value></data>
+  <data name="TbCodexAssessmentAccessNetwork" xml:space="preserve"><value>判斷：目前 P90 為 {0} ms，尚未測到明顯更好的節點。建議先重測或比較另一個接入網路。</value></data>
+  <data name="TbCodexAssessmentLongStream" xml:space="preserve"><value>判斷：短請求 P90 為 {0} ms，但 Codex 同窗出現重試、逾時或斷流，疑似長流穩定性問題，值得切換節點做 A/B 重測。</value></data>
+  <data name="TbCodexAssessmentSignalsUnavailable" xml:space="preserve"><value>判斷：短請求 P90 為 {0} ms，但暫時沒有 Codex 客戶端關聯資料，請等一個新的定時視窗後再決定。</value></data>
+  <data name="TbCodexAssessmentNoClientActivity" xml:space="preserve"><value>判斷：短請求 P90 為 {0} ms，但關聯視窗內沒有 Codex 活動。網路可達性良好，客戶端穩定性仍需實際使用驗證。</value></data>
+  <data name="TbCodexAssessmentHealthy" xml:space="preserve"><value>判斷：短請求可達（P90 {0} ms），且上下文穩定視窗內未發現已識別的客戶端錯誤；這不測量目前任務首段輸出，也不能證明模型或服務正常。</value></data>
+  <data name="TbCodexAssessmentTail" xml:space="preserve"><value>判斷：目前 P90 為 {0} ms，存在尾延遲，但暫時沒有明顯更好的候選，建議繼續觀察後再切換。</value></data>
 </root>

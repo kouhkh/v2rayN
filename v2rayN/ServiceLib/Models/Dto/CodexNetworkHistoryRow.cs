@@ -11,5 +11,6 @@ public sealed class CodexNetworkHistoryRow
     public int MedianMs { get; init; }
     public int P90Ms { get; init; }
     public string HttpStatus { get; init; }
+    public string CodexSignals { get; init; }
     public string Error { get; init; }
 }

@@ -5391,6 +5391,19 @@ namespace ServiceLib.Resx {
         public static string LvCodexAuditMedian { get { return ResourceManager.GetString("LvCodexAuditMedian", resourceCulture); } }
         public static string LvCodexAuditP90 { get { return ResourceManager.GetString("LvCodexAuditP90", resourceCulture); } }
         public static string LvCodexAuditError { get { return ResourceManager.GetString("LvCodexAuditError", resourceCulture); } }
+        public static string LvCodexAuditSignals { get { return ResourceManager.GetString("LvCodexAuditSignals", resourceCulture); } }
+        public static string TbCodexAuditSignalsFormat { get { return ResourceManager.GetString("TbCodexAuditSignalsFormat", resourceCulture); } }
+        public static string TbCodexAuditSignalsUnattributed { get { return ResourceManager.GetString("TbCodexAuditSignalsUnattributed", resourceCulture); } }
+        public static string TbCodexAssessmentNoData { get { return ResourceManager.GetString("TbCodexAssessmentNoData", resourceCulture); } }
+        public static string TbCodexAssessmentContextChanged { get { return ResourceManager.GetString("TbCodexAssessmentContextChanged", resourceCulture); } }
+        public static string TbCodexAssessmentStale { get { return ResourceManager.GetString("TbCodexAssessmentStale", resourceCulture); } }
+        public static string TbCodexAssessmentSwitch { get { return ResourceManager.GetString("TbCodexAssessmentSwitch", resourceCulture); } }
+        public static string TbCodexAssessmentAccessNetwork { get { return ResourceManager.GetString("TbCodexAssessmentAccessNetwork", resourceCulture); } }
+        public static string TbCodexAssessmentLongStream { get { return ResourceManager.GetString("TbCodexAssessmentLongStream", resourceCulture); } }
+        public static string TbCodexAssessmentSignalsUnavailable { get { return ResourceManager.GetString("TbCodexAssessmentSignalsUnavailable", resourceCulture); } }
+        public static string TbCodexAssessmentNoClientActivity { get { return ResourceManager.GetString("TbCodexAssessmentNoClientActivity", resourceCulture); } }
+        public static string TbCodexAssessmentHealthy { get { return ResourceManager.GetString("TbCodexAssessmentHealthy", resourceCulture); } }
+        public static string TbCodexAssessmentTail { get { return ResourceManager.GetString("TbCodexAssessmentTail", resourceCulture); } }
 
         /// <summary>
         ///   查找类似 Upgrade App does not exist 的本地化字符串。

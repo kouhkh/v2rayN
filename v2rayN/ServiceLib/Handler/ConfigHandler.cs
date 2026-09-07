@@ -425,7 +425,12 @@ public static class ConfigHandler
             return -1;
         }
 
+        var previousIndexId = config.IndexId;
         config.IndexId = indexId;
+        if (previousIndexId != indexId)
+        {
+            CodexNetworkAuditManager.Instance.NotifyContextChanged();
+        }
 
         await SaveConfig(config);
 

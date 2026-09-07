@@ -8,6 +8,13 @@ public sealed class CodexNetworkAuditManager
     private CancellationTokenSource? _cancellation;
     private Task? _loopTask;
     private Config? _config;
+    private readonly object _contextLock = new();
+    private string _observedProfileIndexId = string.Empty;
+    private string _observedNetworkFingerprint = string.Empty;
+    private string _observedNetworkKind = string.Empty;
+    private string _observedIdentityConfidence = string.Empty;
+    private long _contextStableSinceUnixMs;
+    private bool _networkChangeSubscribed;
 
     public void Start(Config config)
     {
@@ -22,6 +29,12 @@ public sealed class CodexNetworkAuditManager
             _ = PersistSaltSafelyAsync(_config);
         }
         _cancellation = new CancellationTokenSource();
+        InitializeContext(_config);
+        if (!_networkChangeSubscribed)
+        {
+            NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
+            _networkChangeSubscribed = true;
+        }
         _ = PurgeSafelyAsync(_config.SpeedTestItem.CodexAuditRetentionDays);
         _loopTask = RunLoopAsync(_cancellation.Token);
     }
@@ -43,6 +56,35 @@ public sealed class CodexNetworkAuditManager
         _cancellation.Dispose();
         _cancellation = null;
         _loopTask = null;
+        if (_networkChangeSubscribed)
+        {
+            NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+            _networkChangeSubscribed = false;
+        }
+    }
+
+    public void NotifyContextChanged()
+    {
+        lock (_contextLock)
+        {
+            _observedProfileIndexId = string.Empty;
+            _observedNetworkFingerprint = string.Empty;
+            _observedNetworkKind = string.Empty;
+            _observedIdentityConfidence = string.Empty;
+            _contextStableSinceUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+    }
+
+    public CodexObservedContext GetCurrentContext()
+    {
+        var config = _config ?? AppManager.Instance.Config;
+        var context = ObserveCurrentContext(config);
+        return new()
+        {
+            ProfileIndexId = context.ProfileIndexId,
+            NetworkFingerprint = context.NetworkFingerprint,
+            StableSinceUnixMs = context.StableSinceUnixMs,
+        };
     }
 
     public async Task SaveAsync(
@@ -50,9 +92,16 @@ public sealed class CodexNetworkAuditManager
         string profileIndexId,
         string mode,
         CodexConnectivityResult result,
-        bool nodeChangedDuringProbe = false)
+        bool nodeChangedDuringProbe = false,
+        CodexClientSignals? signals = null,
+        bool signalsAttributed = false,
+        string? networkFingerprint = null,
+        string? networkKind = null,
+        string? identityConfidence = null)
     {
-        var network = GetNetworkIdentity(_config?.SpeedTestItem.CodexAuditSalt ?? string.Empty);
+        var network = networkFingerprint is null
+            ? GetNetworkIdentity(_config?.SpeedTestItem.CodexAuditSalt ?? string.Empty)
+            : (Kind: networkKind ?? "Unknown", Fingerprint: networkFingerprint, Confidence: identityConfidence ?? "none");
         var item = new CodexNetworkProbeItem
         {
             Id = Utils.GetGuid(false),
@@ -69,7 +118,21 @@ public sealed class CodexNetworkAuditManager
             P90Ms = result.P90Ms,
             HttpStatusSummary = result.HttpStatusSummary,
             ErrorKind = result.ErrorKind,
-            ProbeVersion = 1,
+            CodexSignalsAvailable = signals?.Available == true,
+            CodexSignalsAttributed = signals?.Available == true && signalsAttributed,
+            CodexSignalsStatus = signals?.Status ?? "not_collected",
+            CodexSignalAttributionStatus = signals?.Available != true
+                ? "not_available"
+                : signalsAttributed ? "stable_context" : "machine_wide_unattributed",
+            SignalWindowStartUnixMs = signals?.WindowStartUnixMs ?? 0,
+            SignalWindowEndUnixMs = signals?.WindowEndUnixMs ?? 0,
+            CodexRetryCount = signals?.RetryCount ?? 0,
+            CodexRequestTimeoutCount = signals?.RequestTimeoutCount ?? 0,
+            CodexStreamDisconnectCount = signals?.StreamDisconnectCount ?? 0,
+            CodexSendFailureCount = signals?.SendFailureCount ?? 0,
+            CodexHttpFallbackCount = signals?.HttpFallbackCount ?? 0,
+            CodexOutputItemCount = signals?.OutputItemCount ?? 0,
+            ProbeVersion = 2,
             NetworkIdentityVersion = 1,
             NodeChangedDuringProbe = nodeChangedDuringProbe,
         };
@@ -101,6 +164,7 @@ public sealed class CodexNetworkAuditManager
         while (await timer.WaitForNextTickAsync(cancellationToken))
         {
             var config = _config;
+            var beforeContext = config is null ? default : ObserveCurrentContext(config);
             if (config is null || !config.SpeedTestItem.CodexAuditEnabled)
             {
                 continue;
@@ -120,9 +184,30 @@ public sealed class CodexNetworkAuditManager
                     proxy,
                     config.SpeedTestItem.CodexProbeSamples,
                     cancellationToken);
+                var signalWindowEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var signals = await new CodexClientSignalReader().ReadAsync(
+                    signalWindowEnd - (long)TimeSpan.FromMinutes(interval).TotalMilliseconds,
+                    signalWindowEnd);
                 var nodeChanged = config.IndexId != profileIndexId;
+                var afterContext = ObserveCurrentContext(config);
+                var signalsAttributed = !nodeChanged
+                    && beforeContext.ProfileIndexId == profileIndexId
+                    && afterContext.ProfileIndexId == profileIndexId
+                    && beforeContext.NetworkFingerprint == afterContext.NetworkFingerprint
+                    && beforeContext.StableSinceUnixMs == afterContext.StableSinceUnixMs
+                    && afterContext.StableSinceUnixMs <= signals.WindowStartUnixMs;
                 var mode = nodeChanged ? "scheduled-node-changed" : "scheduled-active";
-                await SaveAsync(profile, profileIndexId, mode, result, nodeChanged);
+                await SaveAsync(
+                    profile,
+                    profileIndexId,
+                    mode,
+                    result,
+                    nodeChanged,
+                    signals,
+                    signalsAttributed,
+                    afterContext.NetworkFingerprint,
+                    afterContext.NetworkKind,
+                    afterContext.IdentityConfidence);
                 await PurgeAsync(config.SpeedTestItem.CodexAuditRetentionDays);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -158,6 +243,47 @@ public sealed class CodexNetworkAuditManager
         {
             Logging.SaveLog("CodexNetworkAuditSalt", ex);
         }
+    }
+
+    private void InitializeContext(Config config)
+    {
+        var network = GetNetworkIdentity(config.SpeedTestItem.CodexAuditSalt ?? string.Empty);
+        lock (_contextLock)
+        {
+            _observedProfileIndexId = config.IndexId;
+            _observedNetworkFingerprint = network.Fingerprint;
+            _observedNetworkKind = network.Kind;
+            _observedIdentityConfidence = network.Confidence;
+            _contextStableSinceUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+    }
+
+    private ContextSnapshot ObserveCurrentContext(Config config)
+    {
+        var network = GetNetworkIdentity(config.SpeedTestItem.CodexAuditSalt ?? string.Empty);
+        lock (_contextLock)
+        {
+            if (_observedProfileIndexId != config.IndexId
+                || _observedNetworkFingerprint != network.Fingerprint)
+            {
+                _observedProfileIndexId = config.IndexId;
+                _observedNetworkFingerprint = network.Fingerprint;
+                _observedNetworkKind = network.Kind;
+                _observedIdentityConfidence = network.Confidence;
+                _contextStableSinceUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            }
+            return new(
+                _observedProfileIndexId,
+                _observedNetworkFingerprint,
+                _observedNetworkKind,
+                _observedIdentityConfidence,
+                _contextStableSinceUnixMs);
+        }
+    }
+
+    private void OnNetworkAddressChanged(object? sender, EventArgs args)
+    {
+        NotifyContextChanged();
     }
 
     private static string GetNodeFingerprint(ProfileItem? profile, string salt)
@@ -204,4 +330,11 @@ public sealed class CodexNetworkAuditManager
             return ("Unknown", "unknown", "none");
         }
     }
+
+    private readonly record struct ContextSnapshot(
+        string ProfileIndexId,
+        string NetworkFingerprint,
+        string NetworkKind,
+        string IdentityConfidence,
+        long StableSinceUnixMs);
 }
