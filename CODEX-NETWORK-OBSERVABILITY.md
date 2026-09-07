@@ -55,4 +55,4 @@ HTTP `401`、`403` 或 `405` 的响应可以用于测量网络路径已收到响
 
 - GUI 和 `AmazTool` 必须分别使用 `PublishSingleFile=true` 发布，只把两个单文件可执行程序及 GUI 原生库放入打包目录。`package-local-osx-app.sh` 会拒绝包含松散 `.dll`/`.deps.json`/`.runtimeconfig.json` 的输入，防止经裁剪的 `AmazTool` 框架文件覆盖 GUI 运行库。
 - 升级前必须用隔离的本地配置目录真实启动候选 app，确认进程持续运行、无新崩溃报告，然后才可替换定制版。
-- `/Applications/v2rayN.app` 是官方版应急备用，必须始终保留。升级只替换 `/Applications/v2rayN Codex Observability.app`；不移动、不改名、不清理官方版。
+- `/Applications/v2rayN.app` 是用户原先使用的 `7.21.4` 应急备用版，必须始终保留。升级只替换 `/Applications/v2rayN Codex Observability.app`；不移动、不改名、不清理原始备用版。
